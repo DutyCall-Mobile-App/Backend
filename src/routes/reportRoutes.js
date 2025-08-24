@@ -3,6 +3,8 @@ import {
   createReportController,
   getAllReportsController,
   getReportByIdController,
+  updateReportController,
+  deleteReportController,
 } from "../controllers/reportController.js";
 
 const router = express.Router();
@@ -15,5 +17,11 @@ router.get("/", getAllReportsController);
 
 // Get single report by ID
 router.get("/:id", getReportByIdController);
+
+// Update report by ID
+router.put("/:id", updateReportController);
+
+// Delete report by ID
+router.delete("/:id", deleteReportController);
 
 export default router;

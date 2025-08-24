@@ -50,3 +50,42 @@ export const getReportByIdController = async (req, res) => {
     });
   }
 };
+
+export const updateReportController = async (req, res) => {
+  try {
+    const updatedReport = await Report.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedReport) {
+      return res.status(404).json({ success: false, error: "Report not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: updatedReport,
+      message: "Report updated successfully",
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+export const deleteReportController = async (req, res) => {
+  try {
+    const report = await Report.findByIdAndDelete(req.params.id);
+
+    if (!report) {
+      return res.status(404).json({ success: false, error: "Report not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Report deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
