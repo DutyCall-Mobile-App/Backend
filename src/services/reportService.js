@@ -48,3 +48,37 @@ export const getReportById = async (id) => {
     throw new Error("Error fetching report: " + error.message);
   }
 };
+
+export const updateReport = async (id, updateData) => {
+  try {
+    const updatedReport = await Report.findByIdAndUpdate(
+      id,   
+      updateData,
+      { new: true, runValidators: true }
+    );
+    if (!updatedReport) {
+      throw new Error("Report not found");
+    }
+    return updatedReport;
+  } catch (error) {
+    if (error.message === "Report not found") {
+      throw error;
+    }
+    throw new Error("Error updating report: " + error.message);
+  }
+};
+
+export const deleteReport = async (id) => {
+  try {
+    const deletedReport = await Report.findByIdAndDelete(id);
+    if (!deletedReport) {
+      throw new Error("Report not found");
+    }
+    return deletedReport;
+  } catch (error) {
+    if (error.message === "Report not found") {
+      throw error;
+    }
+    throw new Error("Error deleting report: " + error.message);
+  }
+};
