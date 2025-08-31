@@ -40,6 +40,11 @@ const reports = new mongoose.Schema(
       type: Number,
       required: false,
     },
+    status: {
+      type: String,
+      enum: ["Submitted", "Under Review", "In Progress", "Action Taken", "Resolved"],
+      default: "Submitted",
+    },
   },
   { timestamps: true }
 );
