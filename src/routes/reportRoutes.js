@@ -5,6 +5,7 @@ import {
   getReportByIdController,
   updateReportController,
   deleteReportController,
+  updateReportStatusController,
 } from "../controllers/reportController.js";
 
 const router = express.Router();
@@ -23,5 +24,7 @@ router.put("/:id", updateReportController);
 
 // Delete report by ID
 router.delete("/:id", deleteReportController);
+
+router.put("/:id/status", updateReportStatusController);
 
 export default router;
