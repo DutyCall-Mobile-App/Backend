@@ -1,5 +1,5 @@
+//model
 import mongoose from "mongoose";
-
 const reports = new mongoose.Schema(
   {
     category: {
@@ -43,7 +43,5 @@ const reports = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
 const Report = mongoose.model("Report", reports);
-
 export default Report;
