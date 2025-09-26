@@ -51,11 +51,10 @@ export const getReportById = async (id) => {
 
 export const updateReport = async (id, updateData) => {
   try {
-    const updatedReport = await Report.findByIdAndUpdate(
-      id,   
-      updateData,
-      { new: true, runValidators: true }
-    );
+    const updatedReport = await Report.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    });
     if (!updatedReport) {
       throw new Error("Report not found");
     }
