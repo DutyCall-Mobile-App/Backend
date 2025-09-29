@@ -54,7 +54,4 @@ router.delete("/:id", deleteReportController);
 
 router.put("/:id/status", updateReportStatusController);
 
-router.put("/:id/status", updateReportStatusController);
-
-
 export default router;
