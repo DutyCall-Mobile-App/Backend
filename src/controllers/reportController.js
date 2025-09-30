@@ -7,6 +7,9 @@ import {
   deleteReport,
   updateReportStatus,
 } from "../services/reportService.js";
+
+import { notifyNewReport  } from "./notificationController.js";
+
 export const createReportController = async (req, res) => {
   try {
     console.log("Received body:", req.body);
@@ -42,11 +45,15 @@ export const createReportController = async (req, res) => {
       contact_number: contact_number ? Number(contact_number) : undefined,
     };
     const report = await createReport(data);
+
+    await notifyNewReport(report); //Trigger notifiction after report is created
+
     res.status(201).json({
       success: true,
       data: report,
       message: "Report created successfully",
     });
+
   } catch (error) {
     console.error("Error in createReportController:", error);
     res.status(400).json({
@@ -55,6 +62,7 @@ export const createReportController = async (req, res) => {
     });
   }
 };
+
 export const getAllReportsController = async (req, res) => {
   try {
     const reports = await getAllReports();

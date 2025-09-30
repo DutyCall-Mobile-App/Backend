@@ -1,6 +1,7 @@
 import express from "express";
 import "dotenv/config";
 import { createServer } from "http";
+import { initSocket } from "./socket.js";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -15,11 +16,16 @@ import reportRoutes from "./routes/reportRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 import policeRoutes from "./routes/police.js";
+import notificationRoutes from "./routes/notificationRoutes.js"; 
 
-// Initialize Express and Server
+
+// Initialize Express
 const app = express();
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 3000;
+
+// Initialize socket.io with correct server
+initSocket(httpServer);
 
 // ES Module dirname setup
 const __filename = fileURLToPath(import.meta.url);
@@ -46,6 +52,8 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/chats", chatRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/police", policeRoutes);
+app.use("/api/notifications", notificationRoutes); 
+
 
 // Serve login page
 app.get("/login", (req, res) => {
