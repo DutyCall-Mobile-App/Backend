@@ -15,7 +15,6 @@ import authRoutes from "./routes/authRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
-import policeRoutes from "./routes/police.js";
 import notificationRoutes from "./routes/notificationRoutes.js"; 
 
 
@@ -51,7 +50,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/chats", chatRoutes);
 app.use("/api/messages", messageRoutes);
-app.use("/api/police", policeRoutes);
 app.use("/api/notifications", notificationRoutes); 
 
 
@@ -83,9 +81,7 @@ const startServer = async () => {
   try {
     await connectDB();
     
-    // Initialize default police credentials after DB connection
-    const { initializeDefaultPolice } = await import("./controllers/policeController.js");
-    await initializeDefaultPolice();
+    
     
     httpServer.listen(PORT, "0.0.0.0", () => {
       console.log(`Server running on http://0.0.0.0:${PORT}`);
