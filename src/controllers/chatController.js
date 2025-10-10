@@ -1,155 +1,101 @@
-import Chat from "../models/Chat.js";
-import Report from "../models/reportModel.js";
-import User from "../models/UserModel.js";
-import { sendChatNotification } from "../services/fcmService.js";
+import asyncHandler from 'express-async-handler';
+import Chat from '../models/Chat.js';
+import User from '../models/User.js';
 
-// Get all chats for a user
-export const getUserChats = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    
-    const chats = await Chat.find({ participants: userId, isActive: true })
-      .populate('participants', 'name email role profilePicture isOnline lastSeen')
-      .populate('issueId', 'title status category')
-      .populate({
-        path: 'lastMessage',
-        populate: {
-          path: 'senderId',
-          select: 'name role'
-        }
-      })
-      .sort({ updatedAt: -1 });
 
-    res.status(200).json({
-      success: true,
-      data: chats
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+
+
+// @desc Create or update a chat message
+// @route POST /api/chat
+// @access Private (user or policeman)
+export const createOrUpdateChat = asyncHandler(async (req, res) => {
+  const { text, chatId, userId } = req.body;
+
+  if (!text) {
+    res.status(400);
+    throw new Error('Message text is required');
   }
-};
 
-// Get a specific chat
-export const getChat = async (req, res) => {
-  try {
-    const chat = await Chat.findById(req.params.id)
-      .populate('participants', 'name email role profilePicture phone isOnline lastSeen')
-      .populate('issueId', 'title description category status priority')
-      .populate('lastMessage');
+  let chat;
+
+  if (req.user.role === 'user') {
+    // Users can only send messages to their own chat
+    chat = await Chat.findOne({ user: req.user._id });
+
+    const message = { sender: 'user', text };
 
     if (!chat) {
-      return res.status(404).json({
-        success: false,
-        error: 'Chat not found'
-      });
-    }
-
-    // Check if user is a participant
-    if (!chat.participants.some(p => p._id.toString() === req.user._id.toString())) {
-      return res.status(403).json({
-        success: false,
-        error: 'Not authorized to access this chat'
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: chat
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-};
-
-// Create a new chat
-export const createChat = async (req, res) => {
-  try {
-    const { issueId } = req.body;
-
-    // Check if report exists
-    const report = await Report.findById(issueId);
-    if (!report) {
-      return res.status(404).json({
-        success: false,
-        error: 'Report not found'
-      });
-    }
-
-    // Check if chat already exists for this issue
-    const existingChat = await Chat.findOne({ issueId, isActive: true });
-    if (existingChat) {
-      return res.status(400).json({
-        success: false,
-        error: 'A chat for this issue already exists'
-      });
-    }
-
-    // Determine participants: reporter and police officers (or admins)
-    const participants = [report.reportedBy];
-    
-    // If report is assigned to someone, add them to the chat
-    if (report.assignedTo) {
-      participants.push(report.assignedTo);
+      chat = await Chat.create({ user: req.user._id, messages: [message] });
     } else {
-      // Alternatively, add all police users (for demo purposes)
-      const policeUsers = await User.find({ role: 'police' }).limit(3); // Limit to 3 police users
-      policeUsers.forEach(user => participants.push(user._id));
+      chat.messages.push(message);
+      await chat.save();
+    }
+  } else if (req.user.role === 'policeman') {
+    // Policemen must provide chatId to reply
+    if (!chatId) {
+      res.status(400);
+      throw new Error('chatId is required for policeman to send message');
     }
 
-    const newChat = new Chat({
-      issueId,
-      participants
-    });
+    chat = await Chat.findById(chatId);
+    if (!chat) {
+      res.status(404);
+      throw new Error('Chat not found');
+    }
 
-    const savedChat = await newChat.save();
-    await savedChat.populate('participants', 'name email role profilePicture');
-    await savedChat.populate('issueId', 'title status');
-
-    // Send notifications to participants (except the creator)
-    await sendChatNotification(savedChat, req.user);
-
-    // WebSocket: Notify participants about new chat
-    const io = req.app.locals.io;
-    participants.forEach(participantId => {
-      io.to(`user_${participantId}`).emit('new_chat', {
-        chat: savedChat,
-        message: 'A new chat has been created for an issue you are involved with'
-      });
-    });
-
-    res.status(201).json({
-      success: true,
-      data: savedChat
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    const message = { sender: 'policeman', text };
+    chat.messages.push(message);
+    await chat.save();
   }
-};
 
-// Update user's FCM token
-export const updateFcmToken = async (req, res) => {
-  try {
-    const { fcmToken } = req.body;
-    
-    await User.findByIdAndUpdate(req.user._id, { fcmToken });
-    
-    res.status(200).json({
-      success: true,
-      message: 'FCM token updated successfully'
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+  res.status(201).json({ success: true, data: chat });
+});
+
+// @desc Get all chats (for policeman) or user's chat (for user)
+// @route GET /api/chat
+// @access Private
+export const getChats = asyncHandler(async (req, res) => {
+  if (req.user.role === 'policeman') {
+    const chats = await Chat.find()
+      .populate('user', 'name email role')
+      .sort({ createdAt: -1 });
+    res.json({ success: true, data: chats });
+  } else {
+    const chat = await Chat.findOne({ user: req.user._id });
+    res.json({ success: true, data: chat ? [chat] : [] });
   }
-};
+});
+
+// @desc Get chat by ID
+// @route GET /api/chat/:id
+// @access Private
+export const getChatById = asyncHandler(async (req, res) => {
+  const chat = await Chat.findById(req.params.id).populate('user', 'name email role');
+
+  if (!chat) {
+    res.status(404);
+    throw new Error('Chat not found');
+  }
+
+  res.json({ success: true, data: chat });
+});
+
+// @desc Delete a chat by ID (policeman only)
+// @route DELETE /api/chat/:id
+// @access Private (policeman)
+export const deleteChat = asyncHandler(async (req, res) => {
+  if (req.user.role !== 'policeman') {
+    res.status(403);
+    throw new Error('Only policemen can delete chats');
+  }
+
+  const chat = await Chat.findById(req.params.id);
+  if (!chat) {
+    res.status(404);
+    throw new Error('Chat not found');
+  }
+
+  await chat.deleteOne();
+  res.json({ success: true, message: 'Chat deleted successfully' });
+});
+
