@@ -1,16 +1,17 @@
+// routes/notificationRoutes.js
 import express from "express";
 import {
   getAllNotificationsController,
   markNotificationAsReadController,
-  createTestNotificationController, //Test
+  createTestNotificationController,
 } from "../controllers/notificationController.js";
+import { protect } from "../middleware/auth.js"; // your middleware
 
 const router = express.Router();
 
-router.get("/", getAllNotificationsController);
-router.patch("/:id/read", markNotificationAsReadController);
-
-// ✅ POST route to create a test notification
-router.post("/test", createTestNotificationController);
+// Only authenticated users can access these routes
+router.get("/", protect, getAllNotificationsController);
+router.patch("/:id/read", protect, markNotificationAsReadController);
+router.post("/test", protect, createTestNotificationController);
 
 export default router;

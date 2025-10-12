@@ -1,4 +1,4 @@
-// Updated controller (added file handling with multer)
+// reportController.js
 import {
   createReport,
   getAllReports,
@@ -11,10 +11,9 @@ import {
 import { notifyNewReport  } from "./notificationController.js";
 import Report from "../models/reportModel.js";  // Add this import at the top
 
+// Create a new report
 export const createReportController = async (req, res) => {
   try {
-    console.log("Received body:", req.body);
-    console.log("Received files:", req.files);
     const {
       latitude,
       longitude,
@@ -26,17 +25,20 @@ export const createReportController = async (req, res) => {
       category,
       priority,
     } = req.body;
+
     const location = {
       latitude: Number(latitude),
       longitude: Number(longitude),
       address: address || "",
     };
+
     const evidence = req.files
       ? req.files.map((file) => ({
           fileUrl: `/uploads/${file.filename}`,
           fileType: file.mimetype.startsWith("image/") ? "image" : "video",
         }))
       : [];
+
     const data = {
       category,
       location,
@@ -46,17 +48,19 @@ export const createReportController = async (req, res) => {
       nic: nic || "",
       contact_number: contact_number ? Number(contact_number) : undefined,
       priority: priority || "Medium",
+      user: req.user._id, // associate report with logged-in user
     };
+
     const report = await createReport(data);
 
-    await notifyNewReport(report); //Trigger notifiction after report is created
+    // Trigger notification after report is created
+    await notifyNewReport(report);
 
     res.status(201).json({
       success: true,
       data: report,
       message: "Report created successfully",
     });
-
   } catch (error) {
     console.error("Error in createReportController:", error);
     res.status(400).json({
@@ -66,9 +70,10 @@ export const createReportController = async (req, res) => {
   }
 };
 
+// Get all reports for logged-in user
 export const getAllReportsController = async (req, res) => {
   try {
-    const reports = await getAllReports();
+    const reports = await getAllReports({ user: req.user._id }); // user-specific
     res.status(200).json({
       success: true,
       data: reports,
@@ -80,9 +85,19 @@ export const getAllReportsController = async (req, res) => {
     });
   }
 };
+
+// Get single report by ID (only if it belongs to logged-in user)
 export const getReportByIdController = async (req, res) => {
   try {
     const report = await getReportById(req.params.id);
+
+    if (report.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: "You are not authorized to view this report",
+      });
+    }
+
     res.status(200).json({
       success: true,
       data: report,
@@ -96,20 +111,20 @@ export const getReportByIdController = async (req, res) => {
   }
 };
 
+// Update report (only if it belongs to logged-in user)
 export const updateReportController = async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+    const report = await getReportById(id);
 
-    // Call your service / model function
-    const updatedReport = await updateReport(id, updateData);
-
-    if (!updatedReport) {
-      return res.status(404).json({
+    if (report.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
         success: false,
-        message: "Report not found",
+        error: "You are not authorized to update this report",
       });
     }
+
+    const updatedReport = await updateReport(id, req.body);
 
     res.status(200).json({
       success: true,
@@ -117,17 +132,26 @@ export const updateReportController = async (req, res) => {
       message: "Report updated successfully",
     });
   } catch (error) {
-    console.error("Error updating report:", error);
-    res.status(500).json({
+    const status = error.message === "Report not found" ? 404 : 500;
+    res.status(status).json({
       success: false,
-      message: "An error occurred while updating the report",
       error: error.message,
     });
   }
 };
 
+// Delete report (only if it belongs to logged-in user)
 export const deleteReportController = async (req, res) => {
   try {
+    const report = await getReportById(req.params.id);
+
+    if (report.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: "You are not authorized to delete this report",
+      });
+    }
+
     await deleteReport(req.params.id);
     res.status(200).json({
       success: true,
@@ -139,6 +163,7 @@ export const deleteReportController = async (req, res) => {
   }
 };
 
+// Update report status (optional: could be admin-only)
 export const updateReportStatusController = async (req, res) => {
   try {
     const updatedReport = await updateReportStatus(
