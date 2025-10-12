@@ -12,7 +12,7 @@ import {
   getReportStatsController,
 } from "../controllers/reportController.js";
 import { protect } from "../middleware/auth.js"; // <- import protect middleware
-
+import { updateReportStatusController } from "../controllers/reportController.js";
 const router = express.Router();
 
 // Multer config
