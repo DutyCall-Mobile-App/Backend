@@ -169,6 +169,20 @@ export const resetPassword = asyncHandler(async (req, res) => {
 // @route GET /api/auth/me
 // @access Private
 export const getMe = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).select('-password -resetPasswordToken -resetPasswordExpire');
-  res.json({ success: true, data: user });
+  const user = await User.findById(req.user._id)
+    .select('-password -resetPasswordToken -resetPasswordExpire');
+  
+  // Include additional officer details if role is policeman
+  if (user.role === 'policeman') {
+    res.json({ 
+      success: true, 
+      data: {
+        ...user._doc,
+        badgeNumber: user.badgeNumber,
+        district: user.district
+      }
+    });
+  } else {
+    res.json({ success: true, data: user });
+  }
 });

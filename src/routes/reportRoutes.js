@@ -7,7 +7,9 @@ import {
   getReportByIdController,
   updateReportController,
   deleteReportController,
-  updateReportStatusController,
+  getAllPriorityReportsController,
+  getAllRecentReportsController,
+  getReportStatsController,
 } from "../controllers/reportController.js";
 import { protect } from "../middleware/auth.js"; // <- import protect middleware
 
@@ -55,6 +57,10 @@ router.put("/:id", protect, updateReportController);
 // Delete report by ID (protected)
 router.delete("/:id", protect, deleteReportController);
 
+// Add these new routes
+router.get("/priority/list", getAllPriorityReportsController);
+router.get("/recent/list", getAllRecentReportsController);
+router.get("/stats/data", getReportStatsController);
 // Update report status (maybe only admin/policeman, add role check later)
 router.put("/:id/status", protect, updateReportStatusController);
 

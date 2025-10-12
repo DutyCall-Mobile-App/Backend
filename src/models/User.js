@@ -12,7 +12,24 @@ const UserSchema = new mongoose.Schema({
   },
   resetPasswordToken: String,
   resetPasswordExpire: Date,
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  badgeNumber: {
+    type: String,
+    sparse: true // Only required for police officers
+  },
+  district: {
+    type: String,
+    sparse: true
+  },
+  profileImage: {
+    type: String,
+    default: '' // URL to default avatar
+  },
+  status: {
+    type: String,
+    enum: ['active', 'inactive', 'on-duty', 'off-duty'],
+    default: 'active'
+  }
 });
 
 // Hash password before save if changed
