@@ -11,13 +11,12 @@ import fs from "fs";
 import { connectDB } from "./lib/db.js";
 
 // Routes
-import authRoutes from "./routes/authRoutes.js";
+import authRoutes from './routes/authRoutes.js';
 import reportRoutes from "./routes/reportRoutes.js";
-import chatRoutes from "./routes/chatRoutes.js";
-import messageRoutes from "./routes/messageRoutes.js";
-import policeRoutes from "./routes/police.js";
-import notificationRoutes from "./routes/notificationRoutes.js"; 
+import chatRoutes from './routes/chatRoutes.js';
 
+import notificationRoutes from "./routes/notificationRoutes.js"; 
+import protectedRoutes from './routes/protectedRoutes.js';
 
 // Initialize Express
 const app = express();
@@ -50,10 +49,9 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/chats", chatRoutes);
-app.use("/api/messages", messageRoutes);
-app.use("/api/police", policeRoutes);
-app.use("/api/notifications", notificationRoutes); 
 
+app.use("/api/notifications", notificationRoutes); 
+app.use('/api', protectedRoutes);
 
 // Serve login page
 app.get("/login", (req, res) => {
@@ -82,11 +80,13 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
   try {
     await connectDB();
-    
-    // Initialize default police credentials after DB connection
-    const { initializeDefaultPolice } = await import("./controllers/policeController.js");
-    await initializeDefaultPolice();
-    
+    // initialize socket.io (will be a no-op if already initialized)
+    try {
+      initSocket(httpServer);
+    } catch (err) {
+      console.warn("Failed to initialize socket.io:", err.message);
+    }
+
     httpServer.listen(PORT, "0.0.0.0", () => {
       console.log(`Server running on http://0.0.0.0:${PORT}`);
       if (process.env.MONGO_URI && process.env.MONGO_URI.includes("@")) {
