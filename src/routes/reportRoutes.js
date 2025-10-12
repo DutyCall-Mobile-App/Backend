@@ -9,7 +9,9 @@ import {
   getReportByIdController,
   updateReportController,
   deleteReportController,
-  updateReportStatusController,
+  getAllPriorityReportsController,
+  getAllRecentReportsController,
+  getReportStatsController,
 } from "../controllers/reportController.js";
 const router = express.Router();
 const storage = multer.diskStorage({
@@ -45,13 +47,15 @@ router.get("/", getAllReportsController);
 // Get single report by ID
 router.get("/:id", getReportByIdController);
 
-
 // Update report by ID
 router.put("/:id", updateReportController);
 
 // Delete report by ID
 router.delete("/:id", deleteReportController);
 
-router.put("/:id/status", updateReportStatusController);
+// Add these new routes
+router.get("/priority/list", getAllPriorityReportsController);
+router.get("/recent/list", getAllRecentReportsController);
+router.get("/stats/data", getReportStatsController);
 
 export default router;
