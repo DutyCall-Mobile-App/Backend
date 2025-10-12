@@ -23,7 +23,7 @@ export const initSocket = (server) => {
 
     // Example: listen for client-triggered test event
     socket.on("sendTestNotification", (data) => {
-      console.log("📩 Test notification request:", data);
+      console.log("Test notification request:", data);
 
       io.emit("notification", {
         id: "notif-2",

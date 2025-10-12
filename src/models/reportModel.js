@@ -45,6 +45,11 @@ const reports = new mongoose.Schema(
       enum: ["Submitted", "Under Review", "In Progress", "Action Taken", "Resolved"],
       default: "Submitted",
     },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },    
   },
   { timestamps: true }
 );

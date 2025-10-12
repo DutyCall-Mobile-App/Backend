@@ -7,6 +7,11 @@ const notificationSchema = new mongoose.Schema(
       ref: "Report",
       required: true,
     },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true, // so each notification is linked to a user
+    },
     message: {
       type: String,
       required: true,

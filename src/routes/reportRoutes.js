@@ -1,5 +1,3 @@
-//route
-// Updated routes (added multer for file uploads)
 import express from "express";
 import multer from "multer";
 import path from "path";
@@ -11,7 +9,11 @@ import {
   deleteReportController,
   updateReportStatusController,
 } from "../controllers/reportController.js";
+import { protect } from "../middleware/auth.js"; // <- import protect middleware
+
 const router = express.Router();
+
+// Multer config
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "uploads/");
@@ -26,32 +28,34 @@ const storage = multer.diskStorage({
 });
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (req, file, cb) => {
-    if (
-      file.mimetype.startsWith("image/") ||
-      file.mimetype.startsWith("video/")
-    ) {
+    if (file.mimetype.startsWith("image/") || file.mimetype.startsWith("video/")) {
       cb(null, true);
     } else {
       cb(new Error("Only image and video files are allowed!"), false);
     }
   },
 });
-// Create report route
-router.post("/create", upload.array("evidence", 10), createReportController);
-// Get all reports
-router.get("/", getAllReportsController);
-// Get single report by ID
-router.get("/:id", getReportByIdController);
 
+// Routes
 
-// Update report by ID
-router.put("/:id", updateReportController);
+// Only logged-in users can create a report
+router.post("/create", protect, upload.array("evidence", 10), createReportController);
 
-// Delete report by ID
-router.delete("/:id", deleteReportController);
+// Logged-in user can get their own reports or all reports depending on controller logic
+router.get("/", protect, getAllReportsController);
 
-router.put("/:id/status", updateReportStatusController);
+// Get single report by ID (protected)
+router.get("/:id", protect, getReportByIdController);
+
+// Update report by ID (protected)
+router.put("/:id", protect, updateReportController);
+
+// Delete report by ID (protected)
+router.delete("/:id", protect, deleteReportController);
+
+// Update report status (maybe only admin/policeman, add role check later)
+router.put("/:id/status", protect, updateReportStatusController);
 
 export default router;
