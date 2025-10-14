@@ -10,6 +10,7 @@ import {
   getAllPriorityReportsController,
   getAllRecentReportsController,
   getReportStatsController,
+  updateReportStatusController,
 } from "../controllers/reportController.js";
 import { protect } from "../middleware/auth.js"; // <- import protect middleware
 

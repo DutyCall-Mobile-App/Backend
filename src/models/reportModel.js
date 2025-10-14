@@ -42,28 +42,33 @@ const reports = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Submitted", "Under Review", "In Progress", "Action Taken", "Resolved"],
+      enum: [
+        "Submitted",
+        "Under Review",
+        "In Progress",
+        "Action Taken",
+        "Resolved",
+      ],
       default: "Submitted",
     },
-    // Add these fields to your schema
-priority: {
-  type: String,
-  enum: ["LOW", "MEDIUM", "HIGH"],
-  default: "MEDIUM",
-},
-notes: [
-  {
-    title: String,
-    content: String,
-    officer: String,
-    timestamp: { type: Date, default: Date.now }
-  }
-],
+    priority: {
+      type: String,
+      enum: ["LOW", "MEDIUM", "HIGH"],
+      default: "MEDIUM",
+    },
+    notes: [
+      {
+        title: String,
+        content: String,
+        officer: String,
+        timestamp: { type: Date, default: Date.now },
+      },
+    ],
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-    },    
+    },
   },
   { timestamps: true }
 );
